@@ -16,17 +16,17 @@ export class User extends Model {
     allowNull: false,
     unique: true,
   })
-  email: string;
+  declare email: string;
 
   @Column({
     type: DataType.STRING,
     allowNull: false,
   })
-  password: string;
+  declare password: string;
 
   @Column({
     type: DataType.STRING,
     allowNull: false,
   })
-  fullName: string;
+  declare fullName: string;
 }

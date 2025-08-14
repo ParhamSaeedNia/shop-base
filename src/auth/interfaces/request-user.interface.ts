@@ -1,4 +1,4 @@
 export interface RequestUser {
-  userId: string;
+  sub: string;
   email: string;
 }

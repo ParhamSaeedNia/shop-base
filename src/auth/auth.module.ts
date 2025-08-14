@@ -8,10 +8,11 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { User } from '../entities/user.model';
+import { RefreshToken } from '../entities/refresh-token.model';
 
 @Module({
   imports: [
-    SequelizeModule.forFeature([User]),
+    SequelizeModule.forFeature([User, RefreshToken]),
     PassportModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
