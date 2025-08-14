@@ -5,7 +5,7 @@ import { User } from '../entities/user.model';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/request/create-user.dto';
 import { LoginDto } from './dto/request/login.dto';
-import { AuthResponse } from './dto/response/auth.response';
+import { AuthResponseDto } from './dto/response/auth.response';
 
 @Injectable()
 export class AuthService {
@@ -14,8 +14,8 @@ export class AuthService {
     @InjectModel(User)
     private userModel: typeof User,
   ) {}
-
-  async signup(createUserDto: CreateUserDto): Promise<AuthResponse> {
+  // ---------------------------------------------
+  async signup(createUserDto: CreateUserDto): Promise<AuthResponseDto> {
     const user = await this.userModel.findOne({
       where: { email: createUserDto.email },
     });
@@ -43,8 +43,8 @@ export class AuthService {
       },
     };
   }
-
-  async login(loginDto: LoginDto): Promise<AuthResponse> {
+  // ---------------------------------------------
+  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const user = await this.userModel.findOne({
       where: { email: loginDto.email },
     });
@@ -75,7 +75,7 @@ export class AuthService {
       },
     };
   }
-
+  // ---------------------------------------------
   async validateUser(email: string, password: string): Promise<null | User> {
     const user = await this.userModel.findOne({ where: { email } });
     if (!user) {

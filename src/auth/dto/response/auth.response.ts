@@ -10,8 +10,8 @@ export class UserResponse {
   @ApiProperty({ example: 'John Doe' })
   fullName: string;
 }
-
-export class AuthResponse {
+// ---------------------------------------------
+export class AuthResponseDto {
   @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
   token: string;
 
