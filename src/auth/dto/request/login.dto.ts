@@ -3,16 +3,18 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginDto {
   @ApiProperty({
-    example: 'user@example.com',
-    description: 'The email of the user',
+    example: 'john.doe@example.com',
+    description: 'The email address associated with your account',
+    required: true,
   })
   @IsEmail()
   @IsNotEmpty()
   email: string;
 
   @ApiProperty({
-    example: 'password123',
-    description: 'The password for authentication',
+    example: 'SecurePassword123!',
+    description: 'Your account password',
+    required: true,
   })
   @IsString()
   @IsNotEmpty()

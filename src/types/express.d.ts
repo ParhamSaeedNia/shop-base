@@ -3,5 +3,9 @@ declare namespace Express {
     cookies: {
       [key: string]: string;
     };
+    user?: {
+      sub: string;
+      email: string;
+    };
   }
 }

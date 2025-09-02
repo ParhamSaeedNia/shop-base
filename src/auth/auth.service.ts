@@ -14,157 +14,207 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 @Injectable()
 export class AuthService {
   constructor(
-    private jwtService: JwtService,
-    private configService: ConfigService,
-    @InjectModel(User)
-    private userModel: typeof User,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    @InjectModel(User) private readonly userModel: typeof User,
     @InjectModel(RefreshToken)
-    private refreshTokenModel: typeof RefreshToken,
+    private readonly refreshTokenModel: typeof RefreshToken,
   ) {}
-  // ---------------------------------------------
-  private async generateTokens(
+
+  /** Issue new access & refresh tokens for a given user */
+  private async issueTokens(
     user: User,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = { sub: user.id, email: user.email };
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: this.configService.get<string>('JWT_EXPIRATION') || '15m',
+    });
 
-    const accessToken = this.jwtService.sign(payload);
+    const refreshTokenTtl =
+      this.configService.get<number>('REFRESH_TOKEN_EXPIRATION_MS') ??
+      7 * 24 * 60 * 60 * 1000;
+
+    const refreshTokenSecret =
+      this.configService.get<string>('REFRESH_TOKEN_SECRET') ||
+      this.configService.get<string>('JWT_SECRET');
+
+    if (!refreshTokenSecret) {
+      throw new Error(
+        'JWT_SECRET or REFRESH_TOKEN_SECRET environment variable is not defined',
+      );
+    }
+
     const refreshToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
-      expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRATION'),
+      secret: refreshTokenSecret,
+      expiresIn:
+        this.configService.get<string>('REFRESH_TOKEN_EXPIRATION') || '7d',
     });
 
     await this.refreshTokenModel.create({
       token: refreshToken,
       userId: user.id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      expiresAt: new Date(Date.now() + refreshTokenTtl),
     });
 
     return { accessToken, refreshToken };
   }
-  // ---------------------------------------------
-  async refreshTokens(refreshToken: string): Promise<RefreshTokenResponse> {
-    try {
-      const payload: JwtPayload = this.jwtService.verify(refreshToken, {
-        secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
-      });
 
-      const tokenDoc = await this.refreshTokenModel.findOne({
-        where: {
-          token: refreshToken,
-          isRevoked: false,
-        },
-      });
+  /** Issue tokens for an already authenticated user */
+  async issueTokensForUser(user: {
+    sub: string;
+    email: string;
+  }): Promise<AuthResponseDto> {
+    const userRecord = await this.userModel.findOne({
+      where: { email: user.email },
+    });
+    if (!userRecord) {
+      throw new UnauthorizedException('User not found');
+    }
 
-      if (!tokenDoc) {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
+    const tokens = await this.issueTokens(userRecord);
 
-      if (new Date() > tokenDoc.expiresAt) {
-        await tokenDoc.update({ isRevoked: true });
-        throw new UnauthorizedException('Refresh token expired');
-      }
+    return {
+      token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: {
+        id: userRecord.id,
+        email: userRecord.email,
+        fullName: userRecord.fullName,
+      },
+    };
+  }
 
-      const user = await this.userModel.findByPk(payload.sub);
-      if (!user) {
-        throw new UnauthorizedException('User not found');
-      }
-      const tokens = await this.generateTokens(user);
+  /** Rotate refresh token and issue new tokens */
+  async rotateRefreshToken(
+    refreshToken: string,
+  ): Promise<RefreshTokenResponse> {
+    const refreshTokenSecret =
+      this.configService.get<string>('REFRESH_TOKEN_SECRET') ||
+      this.configService.get<string>('JWT_SECRET');
 
-      await tokenDoc.update({ isRevoked: true });
+    if (!refreshTokenSecret) {
+      throw new Error(
+        'JWT_SECRET or REFRESH_TOKEN_SECRET environment variable is not defined',
+      );
+    }
 
-      return tokens;
-    } catch {
+    const payload: JwtPayload = this.jwtService.verify(refreshToken, {
+      secret: refreshTokenSecret,
+    });
+
+    const tokenDoc = await this.refreshTokenModel.findOne({
+      where: { token: refreshToken, isRevoked: false },
+    });
+
+    if (!tokenDoc) {
       throw new UnauthorizedException('Invalid refresh token');
     }
+
+    if (new Date() > tokenDoc.expiresAt) {
+      await tokenDoc.update({ isRevoked: true });
+      throw new UnauthorizedException('Refresh token expired');
+    }
+
+    const user = await this.userModel.findByPk(payload.sub);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const tokens = await this.issueTokens(user);
+
+    // Revoke the old refresh token
+    await tokenDoc.update({ isRevoked: true });
+
+    return tokens;
   }
-  // ---------------------------------------------
-  async revokeRefreshTokens(userId: string): Promise<void> {
+
+  /** Revoke all refresh tokens for a user */
+  async revokeUserTokens(userId: string): Promise<void> {
     await this.refreshTokenModel.update(
       { isRevoked: true },
       { where: { userId } },
     );
   }
-  // ---------------------------------------------
-  async signup(createUserDto: CreateUserDto): Promise<AuthResponseDto> {
-    const user = await this.userModel.findOne({
+
+  /** Register a new user */
+  async registerUser(createUserDto: CreateUserDto): Promise<AuthResponseDto> {
+    console.log(
+      '📝 Starting user registration for email:',
+      createUserDto.email,
+    );
+
+    const existingUser = await this.userModel.findOne({
       where: { email: createUserDto.email },
     });
-    if (user) {
+
+    if (existingUser) {
+      console.log('❌ User already exists with email:', createUserDto.email);
       throw new UnauthorizedException('Email already exists');
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    console.log('🔐 Password hashed successfully');
+
     const newUser = await this.userModel.create({
       ...createUserDto,
       password: hashedPassword,
     });
 
-    const tokens = await this.generateTokens(newUser);
+    console.log('✅ User created successfully with ID:', newUser.id);
+
+    const tokens = await this.issueTokens(newUser);
+
     return {
       token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       user: {
         id: newUser.id,
         email: newUser.email,
         fullName: newUser.fullName,
       },
-      refreshToken: tokens.refreshToken,
     };
   }
-  // ---------------------------------------------
-  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
+
+  /** Authenticate user by email & password */
+  async authenticateUser(loginDto: LoginDto): Promise<AuthResponseDto> {
     const user = await this.userModel.findOne({
       where: { email: loginDto.email },
     });
+
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    try {
-      const isPasswordValid = await bcrypt.compare(
-        loginDto.password,
-        user.password,
-      );
-
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Invalid credentials');
-      }
-
-      const tokens = await this.generateTokens(user);
-
-      return {
-        token: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        user: {
-          id: user.id,
-          email: user.email,
-          fullName: user.fullName,
-        },
-      };
-    } catch (error) {
-      console.error('Password comparison error:', error);
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.password,
+    );
+    if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
+
+    const tokens = await this.issueTokens(user);
+
+    return {
+      token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+      },
+    };
   }
-  // ---------------------------------------------
-  async validateUser(email: string, password: string): Promise<null | User> {
-    const user = await this.userModel.findOne({
-      where: { email },
-      raw: false,
-    });
 
-    if (!user) {
-      return null;
-    }
+  /** Validate user credentials (for guards/strategies) */
+  async validateCredentials(
+    email: string,
+    password: string,
+  ): Promise<null | User> {
+    const user = await this.userModel.findOne({ where: { email } });
+    if (!user) return null;
 
-    try {
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        return null;
-      }
-      return user;
-    } catch (error) {
-      console.error('Password comparison error:', error);
-      return null;
-    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    return isPasswordValid ? user : null;
   }
 }
