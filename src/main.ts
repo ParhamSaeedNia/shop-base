@@ -18,14 +18,6 @@ async function bootstrap(): Promise<void> {
 
   app.use(cookieParser(cookieSecret || 'default-cookie-secret'));
 
-  // Add middleware to log all requests for debugging
-  app.use((req: any, res: any, next: any) => {
-    console.log(`📥 ${req.method} ${req.path}`);
-    console.log('🍪 Cookies:', req.cookies);
-    console.log('🔑 Authorization:', req.headers.authorization);
-    next();
-  });
-
   const config = new DocumentBuilder()
     .setTitle('Shop API')
     .setDescription('The Shop API documentation')

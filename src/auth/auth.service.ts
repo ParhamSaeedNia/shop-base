@@ -20,7 +20,7 @@ export class AuthService {
     @InjectModel(RefreshToken)
     private readonly refreshTokenModel: typeof RefreshToken,
   ) {}
-
+  //---------------------------------------------
   /** Issue new access & refresh tokens for a given user */
   private async issueTokens(
     user: User,
@@ -58,7 +58,7 @@ export class AuthService {
 
     return { accessToken, refreshToken };
   }
-
+  //---------------------------------------------
   /** Issue tokens for an already authenticated user */
   async issueTokensForUser(user: {
     sub: string;
@@ -83,7 +83,7 @@ export class AuthService {
       },
     };
   }
-
+  //---------------------------------------------
   /** Rotate refresh token and issue new tokens */
   async rotateRefreshToken(
     refreshToken: string,
@@ -127,7 +127,7 @@ export class AuthService {
 
     return tokens;
   }
-
+  //---------------------------------------------
   /** Revoke all refresh tokens for a user */
   async revokeUserTokens(userId: string): Promise<void> {
     await this.refreshTokenModel.update(
@@ -138,22 +138,15 @@ export class AuthService {
 
   /** Register a new user */
   async registerUser(createUserDto: CreateUserDto): Promise<AuthResponseDto> {
-    console.log(
-      '📝 Starting user registration for email:',
-      createUserDto.email,
-    );
-
     const existingUser = await this.userModel.findOne({
       where: { email: createUserDto.email },
     });
 
     if (existingUser) {
-      console.log('❌ User already exists with email:', createUserDto.email);
       throw new UnauthorizedException('Email already exists');
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    console.log('🔐 Password hashed successfully');
 
     const newUser = await this.userModel.create({
       ...createUserDto,
@@ -174,7 +167,7 @@ export class AuthService {
       },
     };
   }
-
+  //---------------------------------------------
   /** Authenticate user by email & password */
   async authenticateUser(loginDto: LoginDto): Promise<AuthResponseDto> {
     const user = await this.userModel.findOne({
@@ -205,7 +198,7 @@ export class AuthService {
       },
     };
   }
-
+  //---------------------------------------------
   /** Validate user credentials (for guards/strategies) */
   async validateCredentials(
     email: string,
@@ -217,4 +210,5 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     return isPasswordValid ? user : null;
   }
+  //---------------------------------------------
 }

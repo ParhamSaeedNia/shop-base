@@ -13,7 +13,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!jwtSecret) {
       throw new Error('JWT_SECRET environment variable is not defined');
     }
-
     super({
       jwtFromRequest: (req: Request) => {
         let token: string | null = null;
@@ -21,20 +20,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         // First try to get token from cookies (accessToken)
         if (req.cookies && req.cookies.accessToken) {
           token = req.cookies.accessToken as string;
-          console.log('🔑 Token found in cookies (accessToken)');
         }
         // Then try Authorization header (Bearer token)
         else if (req.headers.authorization?.startsWith('Bearer ')) {
           token = req.headers.authorization.split(' ')[1];
-          console.log('🔑 Token found in Authorization header');
-        }
-
-        if (!token) {
-          console.log('❌ No JWT token found in request');
-          console.log('📋 Request cookies:', req.cookies);
-          console.log('📋 Request headers:', req.headers.authorization);
-        } else {
-          console.log('✅ JWT token extracted successfully');
         }
 
         return token;
@@ -43,12 +32,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       secretOrKey: jwtSecret,
     });
   }
-
+  //---------------------------------------------
   validate(payload: JwtPayload): RequestUser {
-    console.log('🔍 JWT payload validated:', {
-      sub: payload.sub,
-      email: payload.email,
-    });
     return { sub: payload.sub, email: payload.email };
   }
 }

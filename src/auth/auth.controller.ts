@@ -32,7 +32,7 @@ import { LoginDto } from './dto/request/login.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
+  //---------------------------------------------
   /** Register a new user */
   @ApiOperation({
     summary: 'Register a new user',
@@ -77,7 +77,7 @@ export class AuthController {
     const { refreshToken, ...responseData } = result;
     return responseData;
   }
-
+  //---------------------------------------------
   /** Login with credentials */
   @ApiOperation({
     summary: 'Login with credentials',
@@ -124,7 +124,7 @@ export class AuthController {
     const { refreshToken, ...responseData } = result;
     return responseData;
   }
-
+  //---------------------------------------------
   /** Refresh access token */
   @ApiOperation({
     summary: 'Refresh access token',
@@ -174,7 +174,7 @@ export class AuthController {
     const { refreshToken: _refreshToken, ...responseData } = tokens;
     return responseData;
   }
-
+  //---------------------------------------------
   /** Logout user */
   @ApiOperation({
     summary: 'Logout and revoke tokens',
@@ -195,10 +195,6 @@ export class AuthController {
     @Req() req: Request & { user: RequestUser },
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string }> {
-    console.log('🚪 Logout requested for user:', req.user);
-    console.log('🍪 Request cookies:', req.cookies);
-    console.log('🔑 Authorization header:', req.headers.authorization);
-
     await this.authService.revokeUserTokens(req.user.sub);
 
     // Clear both access token and refresh token cookies
@@ -214,7 +210,7 @@ export class AuthController {
       sameSite: 'strict',
     });
 
-    console.log('✅ Logout completed successfully');
     return { message: 'Successfully logged out' };
   }
+  //---------------------------------------------
 }
