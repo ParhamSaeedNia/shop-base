@@ -7,6 +7,7 @@ import {
   Res,
   HttpCode,
   UnauthorizedException,
+  Get,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -213,4 +214,92 @@ export class AuthController {
     return { message: 'Successfully logged out' };
   }
   //---------------------------------------------
+  /** Simple protected endpoint (no database access) */
+  @ApiOperation({
+    summary: 'Test protected endpoint',
+    description:
+      'Simple endpoint that requires authentication - returns user info from JWT token',
+  })
+  @ApiProduces('application/json')
+  @ApiResponse({
+    status: 200,
+    description: 'Authentication successful',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'You are authenticated!' },
+        user: {
+          type: 'object',
+          properties: {
+            sub: {
+              type: 'string',
+              example: '123e4567-e89b-12d3-a456-426614174000',
+            },
+            email: { type: 'string', example: 'john.doe@example.com' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - invalid or expired access token',
+  })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Get('me')
+  @HttpCode(200)
+  getMe(@Req() req: Request & { user: RequestUser }): Promise<{
+    message: string;
+    user: RequestUser;
+  }> {
+    return Promise.resolve({
+      message: 'You are authenticated!',
+      user: req.user,
+    });
+  }
+  //---------------------------------------------
+  /** Get current user profile (protected endpoint) */
+  @ApiOperation({
+    summary: 'Get current user profile',
+    description: 'Retrieve the profile of the currently authenticated user',
+  })
+  @ApiProduces('application/json')
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174000' },
+        email: { type: 'string', example: 'john.doe@example.com' },
+        fullName: { type: 'string', example: 'John Doe' },
+        message: { type: 'string', example: 'Profile retrieved successfully' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - invalid or expired access token',
+  })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Get('profile')
+  @HttpCode(200)
+  async getProfile(@Req() req: Request & { user: RequestUser }): Promise<{
+    id: string;
+    email: string;
+    fullName: string;
+    message: string;
+  }> {
+    // Get user details from the database
+    const user = await this.authService.getUserById(req.user.sub);
+
+    return {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      message: 'Profile retrieved successfully',
+    };
+  }
 }

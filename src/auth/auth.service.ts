@@ -153,8 +153,6 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    console.log('✅ User created successfully with ID:', newUser.id);
-
     const tokens = await this.issueTokens(newUser);
 
     return {
@@ -211,4 +209,12 @@ export class AuthService {
     return isPasswordValid ? user : null;
   }
   //---------------------------------------------
+  /** Get user by ID */
+  async getUserById(userId: string): Promise<User> {
+    const user = await this.userModel.findByPk(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    return user;
+  }
 }
