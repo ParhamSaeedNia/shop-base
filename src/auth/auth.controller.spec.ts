@@ -101,14 +101,13 @@ describe('AuthController', () => {
         'accessToken',
         mockAuthResponse.token,
         {
-          httpOnly: false,
+          httpOnly: true,
           secure: false,
           sameSite: 'strict',
           maxAge: 15 * 60 * 1000,
         },
       );
       expect(result).toEqual({
-        token: mockAuthResponse.token,
         user: mockAuthResponse.user,
       });
     });
@@ -162,14 +161,13 @@ describe('AuthController', () => {
         'accessToken',
         mockAuthResponse.token,
         {
-          httpOnly: false,
+          httpOnly: true,
           secure: false,
           sameSite: 'strict',
           maxAge: 15 * 60 * 1000,
         },
       );
       expect(result).toEqual({
-        token: mockAuthResponse.token,
         user: mockAuthResponse.user,
       });
     });
@@ -205,14 +203,14 @@ describe('AuthController', () => {
         'accessToken',
         mockRefreshResponse.accessToken,
         {
-          httpOnly: false,
+          httpOnly: true,
           secure: false,
           sameSite: 'strict',
           maxAge: 15 * 60 * 1000,
         },
       );
       expect(result).toEqual({
-        accessToken: mockRefreshResponse.accessToken,
+        message: 'Tokens refreshed successfully',
       });
     });
 

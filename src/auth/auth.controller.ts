@@ -21,9 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/request/create-user.dto';
-import { AuthResponseDto } from './dto/response/auth.response';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { RefreshTokenResponse } from './dto/response/refresh-token.response';
 import type { Request, Response } from 'express';
 import type { RequestUser } from './interfaces/request-user.interface';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -45,8 +43,23 @@ export class AuthController {
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({
     status: 201,
-    type: AuthResponseDto,
     description: 'User successfully registered',
+    schema: {
+      type: 'object',
+      properties: {
+        user: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              example: '123e4567-e89b-12d3-a456-426614174000',
+            },
+            email: { type: 'string', example: 'john.doe@example.com' },
+            fullName: { type: 'string', example: 'John Doe' },
+          },
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 400,
@@ -56,9 +69,10 @@ export class AuthController {
   async register(
     @Body() dto: CreateUserDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<Omit<AuthResponseDto, 'refreshToken'>> {
+  ): Promise<{ user: { id: string; email: string; fullName: string } }> {
     const result = await this.authService.registerUser(dto);
 
+    // Set both tokens as httpOnly cookies for maximum security
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -66,17 +80,15 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // Set access token as a cookie for JWT strategy
     res.cookie('accessToken', result.token, {
-      httpOnly: false, // Allow client-side access for logout
+      httpOnly: true, // Secure: not accessible via JavaScript
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 * 60 * 1000, // 15 minutes (same as JWT expiration)
+      maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { refreshToken, ...responseData } = result;
-    return responseData;
+    // Return only user data, no tokens
+    return { user: result.user };
   }
   //---------------------------------------------
   /** Login with credentials */
@@ -90,8 +102,23 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   @ApiResponse({
     status: 200,
-    type: AuthResponseDto,
     description: 'Successfully authenticated',
+    schema: {
+      type: 'object',
+      properties: {
+        user: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              example: '123e4567-e89b-12d3-a456-426614174000',
+            },
+            email: { type: 'string', example: 'john.doe@example.com' },
+            fullName: { type: 'string', example: 'John Doe' },
+          },
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 401,
@@ -102,10 +129,10 @@ export class AuthController {
   async login(
     @Req() req: Request & { user: RequestUser },
     @Res({ passthrough: true }) res: Response,
-  ): Promise<Omit<AuthResponseDto, 'refreshToken'>> {
+  ): Promise<{ user: { id: string; email: string; fullName: string } }> {
     const result = await this.authService.issueTokensForUser(req.user);
 
-    // Set refresh token as httpOnly cookie
+    // Set both tokens as httpOnly cookies for maximum security
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -113,17 +140,15 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // Set access token as a cookie for JWT strategy
     res.cookie('accessToken', result.token, {
-      httpOnly: false, // Allow client-side access for logout
+      httpOnly: true, // Secure: not accessible via JavaScript
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 * 60 * 1000, // 15 minutes (same as JWT expiration)
+      maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { refreshToken, ...responseData } = result;
-    return responseData;
+    // Return only user data, no tokens
+    return { user: result.user };
   }
   //---------------------------------------------
   /** Refresh access token */
@@ -135,8 +160,13 @@ export class AuthController {
   @ApiProduces('application/json')
   @ApiResponse({
     status: 200,
-    type: RefreshTokenResponse,
     description: 'Tokens successfully refreshed',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Tokens refreshed successfully' },
+      },
+    },
   })
   @ApiResponse({
     status: 401,
@@ -148,7 +178,7 @@ export class AuthController {
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<Omit<RefreshTokenResponse, 'refreshToken'>> {
+  ): Promise<{ message: string }> {
     const refreshToken = req.cookies['refreshToken'] as string;
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token not found');
@@ -156,6 +186,7 @@ export class AuthController {
 
     const tokens = await this.authService.rotateRefreshToken(refreshToken);
 
+    // Set both tokens as httpOnly cookies for maximum security
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -163,17 +194,15 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // Set new access token as a cookie for JWT strategy
     res.cookie('accessToken', tokens.accessToken, {
-      httpOnly: false, // Allow client-side access for logout
+      httpOnly: true, // Secure: not accessible via JavaScript
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 * 60 * 1000, // 15 minutes (same as JWT expiration)
+      maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { refreshToken: _refreshToken, ...responseData } = tokens;
-    return responseData;
+    // Return only success message, no tokens
+    return { message: 'Tokens refreshed successfully' };
   }
   //---------------------------------------------
   /** Logout user */
