@@ -30,6 +30,7 @@ describe('AuthService', () => {
     email: 'test@example.com',
     password: 'hashedPassword123',
     fullName: 'Test User',
+    role: 'customer',
     save: jest.fn(),
     update: jest.fn(),
   } as any;

@@ -29,4 +29,11 @@ export class User extends Model {
     allowNull: false,
   })
   declare fullName: string;
+
+  @Column({
+    type: DataType.ENUM('customer', 'admin'),
+    allowNull: false,
+    defaultValue: 'customer',
+  })
+  declare role: 'customer' | 'admin';
 }

@@ -20,7 +20,7 @@ export class RefreshToken extends Model {
   declare id: string;
 
   @Column({
-    type: DataType.STRING,
+    type: DataType.STRING(1000),
     allowNull: false,
   })
   declare token: string;

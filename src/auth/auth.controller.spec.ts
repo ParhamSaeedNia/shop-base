@@ -22,6 +22,7 @@ describe('AuthController', () => {
     user: {
       sub: 'user-id-123',
       email: 'test@example.com',
+      role: 'customer',
     } as RequestUser,
   } as jest.Mocked<Request & { user: RequestUser }>;
 
@@ -44,6 +45,7 @@ describe('AuthController', () => {
     id: 'user-id-123',
     email: 'test@example.com',
     fullName: 'Test User',
+    role: 'customer',
   };
 
   beforeEach(async () => {
