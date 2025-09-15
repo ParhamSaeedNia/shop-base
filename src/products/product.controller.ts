@@ -30,7 +30,7 @@ import { AdminGuard } from '../auth/guards/admin.guard';
 @Controller('products')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
-
+  //---------------------------------------------
   @Post()
   @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiBearerAuth()
@@ -140,7 +140,7 @@ export class ProductController {
       search,
     );
   }
-
+  //---------------------------------------------
   @Get('featured')
   @ApiOperation({ summary: 'Get featured products' })
   @ApiQuery({
@@ -159,7 +159,7 @@ export class ProductController {
   ) {
     return this.productService.getFeaturedProducts(limit);
   }
-
+  //---------------------------------------------
   @Get('top-rated')
   @ApiOperation({ summary: 'Get top-rated products' })
   @ApiQuery({
@@ -178,7 +178,7 @@ export class ProductController {
   ) {
     return this.productService.getTopRatedProducts(limit);
   }
-
+  //---------------------------------------------
   @Get('best-selling')
   @ApiOperation({ summary: 'Get best-selling products' })
   @ApiQuery({
@@ -197,7 +197,7 @@ export class ProductController {
   ) {
     return this.productService.getBestSellingProducts(limit);
   }
-
+  //---------------------------------------------
   @Get('categories')
   @ApiOperation({ summary: 'Get all product categories' })
   @ApiResponse({
@@ -211,7 +211,7 @@ export class ProductController {
   getCategories() {
     return this.productService.getCategories();
   }
-
+  //---------------------------------------------
   @Get('brands')
   @ApiOperation({ summary: 'Get all product brands' })
   @ApiResponse({
@@ -225,7 +225,7 @@ export class ProductController {
   getBrands() {
     return this.productService.getBrands();
   }
-
+  //---------------------------------------------
   @Get(':id')
   @ApiOperation({ summary: 'Get product by ID' })
   @ApiResponse({
@@ -237,7 +237,7 @@ export class ProductController {
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.productService.findOne(id);
   }
-
+  //---------------------------------------------
   @Patch(':id')
   @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiBearerAuth()
@@ -255,7 +255,7 @@ export class ProductController {
   ) {
     return this.productService.update(id, updateProductDto);
   }
-
+  //---------------------------------------------
   @Delete(':id')
   @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiBearerAuth()
@@ -266,7 +266,7 @@ export class ProductController {
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.productService.remove(id);
   }
-
+  //---------------------------------------------
   @Patch(':id/stock')
   @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiBearerAuth()
@@ -284,4 +284,5 @@ export class ProductController {
   ) {
     return this.productService.updateStock(id, quantity);
   }
+  //---------------------------------------------
 }

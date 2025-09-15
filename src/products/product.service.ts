@@ -16,19 +16,18 @@ export class ProductService {
     @InjectModel(Product)
     private readonly productModel: typeof Product,
   ) {}
-
+  //---------------------------------------------
   async create(createProductDto: CreateProductDto): Promise<Product> {
     try {
       const product = await this.productModel.create(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        createProductDto as unknown as any,
+        createProductDto as Partial<Product>,
       );
       return product;
     } catch {
       throw new BadRequestException('Failed to create product');
     }
   }
-
+  //---------------------------------------------
   async findAll(
     page: number = 1,
     limit: number = 10,
@@ -89,7 +88,7 @@ export class ProductService {
       totalPages: Math.ceil(count / limit),
     };
   }
-
+  //---------------------------------------------
   async findOne(id: string): Promise<Product> {
     const product = await this.productModel.findByPk(id);
     if (!product) {
@@ -101,7 +100,7 @@ export class ProductService {
 
     return product;
   }
-
+  //---------------------------------------------
   async update(
     id: string,
     updateProductDto: UpdateProductDto,
@@ -118,7 +117,7 @@ export class ProductService {
       throw new BadRequestException('Failed to update product');
     }
   }
-
+  //---------------------------------------------
   async remove(id: string): Promise<void> {
     const product = await this.productModel.findByPk(id);
     if (!product) {
@@ -127,7 +126,7 @@ export class ProductService {
 
     await product.destroy();
   }
-
+  //---------------------------------------------
   async getCategories(): Promise<string[]> {
     const categories = await this.productModel.findAll({
       attributes: ['category'],
@@ -140,7 +139,7 @@ export class ProductService {
 
     return categories.map((cat) => cat.category).filter(Boolean);
   }
-
+  //---------------------------------------------
   async getBrands(): Promise<string[]> {
     const brands = await this.productModel.findAll({
       attributes: ['brand'],
@@ -153,7 +152,7 @@ export class ProductService {
 
     return brands.map((brand) => brand.brand).filter(Boolean);
   }
-
+  //---------------------------------------------
   async getFeaturedProducts(limit: number = 8): Promise<Product[]> {
     return this.productModel.findAll({
       where: {
@@ -164,7 +163,7 @@ export class ProductService {
       order: [['createdAt', 'DESC']],
     });
   }
-
+  //---------------------------------------------
   async getTopRatedProducts(limit: number = 8): Promise<Product[]> {
     return this.productModel.findAll({
       where: {
@@ -178,7 +177,7 @@ export class ProductService {
       ],
     });
   }
-
+  //---------------------------------------------
   async getBestSellingProducts(limit: number = 8): Promise<Product[]> {
     return this.productModel.findAll({
       where: {
@@ -188,7 +187,7 @@ export class ProductService {
       order: [['soldCount', 'DESC']],
     });
   }
-
+  //---------------------------------------------
   async updateStock(id: string, quantity: number): Promise<Product> {
     const product = await this.productModel.findByPk(id);
     if (!product) {
@@ -203,7 +202,7 @@ export class ProductService {
     await product.update({ stock: newStock });
     return product;
   }
-
+  //---------------------------------------------
   async incrementSoldCount(id: string, quantity: number = 1): Promise<void> {
     const product = await this.productModel.findByPk(id);
     if (!product) {
