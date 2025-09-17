@@ -7,7 +7,6 @@ import { ConfigService } from '@nestjs/config';
 import { LoggerService } from '../logger/logger.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/request/create-user.dto';
-import { LoginDto } from './dto/request/login.dto';
 import { AuthResponseDto } from './dto/response/auth.response';
 import { RefreshTokenResponse } from './dto/response/refresh-token.response';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
@@ -178,37 +177,6 @@ export class AuthService {
         id: newUser.id,
         email: newUser.email,
         fullName: newUser.fullName,
-      },
-    };
-  }
-  //---------------------------------------------
-  /** Authenticate user by email & password */
-  async authenticateUser(loginDto: LoginDto): Promise<AuthResponseDto> {
-    const user = await this.userModel.findOne({
-      where: { email: loginDto.email },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const isPasswordValid = await bcrypt.compare(
-      loginDto.password,
-      user.password,
-    );
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const tokens = await this.issueTokens(user);
-
-    return {
-      token: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
       },
     };
   }

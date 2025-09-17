@@ -1,13 +1,13 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Product } from '../entities/product.model';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Op, WhereOptions, CreationAttributes } from 'sequelize';
+import { CreationAttributes, Op, WhereOptions } from 'sequelize';
 import { ProductWhereOptions } from './interfaces/product-where-options.interface';
 
 @Injectable()
@@ -19,10 +19,9 @@ export class ProductService {
   //---------------------------------------------
   async create(createProductDto: CreateProductDto): Promise<Product> {
     try {
-      const product = await this.productModel.create(
+      return await this.productModel.create(
         createProductDto as unknown as CreationAttributes<Product>,
       );
-      return product;
     } catch {
       throw new BadRequestException('Failed to create product');
     }
@@ -200,14 +199,5 @@ export class ProductService {
 
     await product.update({ stock: newStock });
     return product;
-  }
-  //---------------------------------------------
-  async incrementSoldCount(id: string, quantity: number = 1): Promise<void> {
-    const product = await this.productModel.findByPk(id);
-    if (!product) {
-      throw new NotFoundException('Product not found');
-    }
-
-    await product.increment('soldCount', { by: quantity });
   }
 }
