@@ -7,7 +7,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Product } from '../entities/product.model';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Op } from 'sequelize';
+import { Op, WhereOptions, CreationAttributes } from 'sequelize';
 import { ProductWhereOptions } from './interfaces';
 
 @Injectable()
@@ -20,7 +20,7 @@ export class ProductService {
   async create(createProductDto: CreateProductDto): Promise<Product> {
     try {
       const product = await this.productModel.create(
-        createProductDto as Partial<Product>,
+        createProductDto as unknown as CreationAttributes<Product>,
       );
       return product;
     } catch {
@@ -74,8 +74,7 @@ export class ProductService {
     }
 
     const { count, rows } = await this.productModel.findAndCountAll({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      where: where as unknown as any,
+      where: where as WhereOptions<Product>,
       limit,
       offset,
       order: [['createdAt', 'DESC']],

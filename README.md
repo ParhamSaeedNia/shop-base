@@ -1,98 +1,218 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Shop Base - Spring Boot Application
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A Spring Boot e-commerce backend application with JWT authentication, role-based access control, and product management.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- **Authentication & Authorization**
+  - JWT-based authentication
+  - Role-based access control (Customer/Admin)
+  - HttpOnly cookies for secure token storage
+  - Refresh token mechanism
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Product Management**
+  - Full CRUD operations for products
+  - Advanced filtering and search
+  - Featured products, top-rated, and best-selling endpoints
+  - Admin-only product management
 
-## Project setup
+- **Database**
+  - PostgreSQL integration
+  - JPA/Hibernate ORM
+  - Automatic schema updates
 
-```bash
-$ pnpm install
+- **API Documentation**
+  - Swagger/OpenAPI 3 integration
+  - Comprehensive API documentation
+
+## Prerequisites
+
+- Java 17 or higher
+- Maven 3.6+
+- PostgreSQL 12+
+- Node.js (for frontend development)
+
+## Setup Instructions
+
+### 1. Database Setup
+
+Create a PostgreSQL database:
+
+```sql
+CREATE DATABASE shop_base;
 ```
 
-## Compile and run the project
+### 2. Environment Variables
 
-```bash
-# development
-$ pnpm run start
+Create a `.env` file in the project root (optional):
 
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+```env
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+JWT_SECRET=your_jwt_secret_key_here
 ```
 
-## Run tests
+### 3. Build and Run
 
 ```bash
-# unit tests
-$ pnpm run test
+# Build the project
+mvn clean compile
 
-# e2e tests
-$ pnpm run test:e2e
+# Run the application
+mvn spring-boot:run
+```
 
-# test coverage
-$ pnpm run test:cov
+The application will start on `http://localhost:8080`
+
+### 4. API Documentation
+
+Access Swagger UI at: `http://localhost:8080/swagger-ui.html`
+
+## API Endpoints
+
+### Authentication
+
+- `POST /auth/signup` - Register a new user
+- `POST /auth/login` - Login user
+- `POST /auth/refresh` - Refresh access token
+- `POST /auth/logout` - Logout user
+- `GET /auth/profile` - Get current user profile
+
+### Products (Public)
+
+- `GET /products` - Get all products with filters
+- `GET /products/{id}` - Get product by ID
+- `GET /products/categories` - Get all categories
+- `GET /products/brands` - Get all brands
+- `GET /products/featured` - Get featured products
+- `GET /products/top-rated` - Get top-rated products
+- `GET /products/best-selling` - Get best-selling products
+
+### Products (Admin Only)
+
+- `POST /products` - Create new product
+- `PUT /products/{id}` - Update product
+- `DELETE /products/{id}` - Delete product
+- `PATCH /products/{id}/stock` - Update product stock
+
+## Database Schema
+
+### Users Table
+
+- `id` (UUID, Primary Key)
+- `email` (String, Unique)
+- `password` (String, Encrypted)
+- `full_name` (String)
+- `role` (Enum: CUSTOMER, ADMIN)
+- `created_at` (Timestamp)
+- `updated_at` (Timestamp)
+
+### Products Table
+
+- `id` (UUID, Primary Key)
+- `name` (String)
+- `description` (Text)
+- `price` (Decimal)
+- `stock` (Integer)
+- `sku` (String)
+- `category` (String)
+- `brand` (String)
+- `images` (JSON String)
+- `specifications` (JSON String)
+- `rating` (Decimal)
+- `review_count` (Integer)
+- `is_active` (Boolean)
+- `is_featured` (Boolean)
+- `sale_price` (Decimal)
+- `sale_start_date` (Date)
+- `sale_end_date` (Date)
+- `weight` (String)
+- `dimensions` (String)
+- `color` (String)
+- `size` (String)
+- `view_count` (Integer)
+- `sold_count` (Integer)
+- `created_at` (Timestamp)
+- `updated_at` (Timestamp)
+
+### Refresh Tokens Table
+
+- `id` (UUID, Primary Key)
+- `token` (String)
+- `user_id` (UUID, Foreign Key)
+- `expires_at` (Timestamp)
+- `is_revoked` (Boolean)
+- `created_at` (Timestamp)
+- `updated_at` (Timestamp)
+
+## Security Features
+
+- **JWT Authentication**: Secure token-based authentication
+- **HttpOnly Cookies**: Tokens stored in secure HttpOnly cookies
+- **Role-based Access Control**: Admin and Customer roles
+- **Password Encryption**: BCrypt password hashing
+- **CORS Configuration**: Configurable cross-origin resource sharing
+
+## Development
+
+### Project Structure
+
+```
+src/
+├── main/
+│   ├── java/com/shopbase/
+│   │   ├── controller/     # REST controllers
+│   │   ├── dto/           # Data Transfer Objects
+│   │   ├── entity/        # JPA entities
+│   │   ├── repository/    # Data repositories
+│   │   ├── security/      # Security configuration
+│   │   ├── service/       # Business logic
+│   │   └── util/          # Utility classes
+│   └── resources/
+│       └── application.yml # Configuration
+└── test/                  # Test files
+```
+
+### Testing
+
+```bash
+# Run tests
+mvn test
+
+# Run with coverage
+mvn test jacoco:report
 ```
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Production Configuration
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+1. Update `application.yml` for production:
+   - Set `spring.jpa.hibernate.ddl-auto` to `validate`
+   - Configure production database
+   - Set secure JWT secret
+   - Enable HTTPS
+
+2. Build for production:
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+mvn clean package -Pprod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+3. Run the JAR:
 
-## Resources
+```bash
+java -jar target/shop-base-spring-1.0-SNAPSHOT.jar
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+## Contributing
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is licensed under the MIT License.
