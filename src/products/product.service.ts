@@ -8,7 +8,7 @@ import { Product } from '../entities/product.model';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Op, WhereOptions, CreationAttributes } from 'sequelize';
-import { ProductWhereOptions } from './interfaces';
+import { ProductWhereOptions } from './interfaces/product-where-options.interface';
 
 @Injectable()
 export class ProductService {

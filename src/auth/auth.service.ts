@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { User } from '../entities/user.model';
 import { RefreshToken } from '../entities/refresh-token.model';
 import { ConfigService } from '@nestjs/config';
+import { LoggerService } from '../logger/logger.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/request/create-user.dto';
 import { LoginDto } from './dto/request/login.dto';
@@ -16,6 +17,7 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly logger: LoggerService,
     @InjectModel(User) private readonly userModel: typeof User,
     @InjectModel(RefreshToken)
     private readonly refreshTokenModel: typeof RefreshToken,
@@ -138,11 +140,20 @@ export class AuthService {
 
   /** Register a new user */
   async registerUser(createUserDto: CreateUserDto): Promise<AuthResponseDto> {
+    this.logger.log(
+      `Attempting to register user with email: ${createUserDto.email}`,
+      'AuthService',
+    );
+
     const existingUser = await this.userModel.findOne({
       where: { email: createUserDto.email },
     });
 
     if (existingUser) {
+      this.logger.warn(
+        `Registration failed: Email already exists - ${createUserDto.email}`,
+        'AuthService',
+      );
       throw new UnauthorizedException('Email already exists');
     }
 
@@ -152,6 +163,11 @@ export class AuthService {
       ...createUserDto,
       password: hashedPassword,
     });
+
+    this.logger.log(
+      `User registered successfully: ${newUser.id}`,
+      'AuthService',
+    );
 
     const tokens = await this.issueTokens(newUser);
 
