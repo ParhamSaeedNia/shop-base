@@ -5,18 +5,24 @@ import { AppModule } from './app.module';
 import { LoggerService } from './logger/logger.service';
 import { ServiceCallInterceptor } from './logger/interceptors/service-call.interceptor';
 import { HttpRequestInterceptor } from './logger/interceptors/http-request.interceptor';
+import { PrometheusInterceptor } from './metrics/prometheus.interceptor';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
 
-  // Get logger service
+  // Get services and interceptors
   const logger = app.get(LoggerService);
   const serviceCallInterceptor = app.get(ServiceCallInterceptor);
   const httpRequestInterceptor = app.get(HttpRequestInterceptor);
+  const prometheusInterceptor = app.get(PrometheusInterceptor);
 
   // Set global interceptors
-  app.useGlobalInterceptors(httpRequestInterceptor, serviceCallInterceptor);
+  app.useGlobalInterceptors(
+    httpRequestInterceptor,
+    serviceCallInterceptor,
+    prometheusInterceptor,
+  );
 
   app.useGlobalPipes(new ValidationPipe());
 
@@ -50,6 +56,10 @@ async function bootstrap(): Promise<void> {
   );
   logger.log(
     `Swagger documentation available at: http://localhost:${port}/api`,
+    'Bootstrap',
+  );
+  logger.log(
+    `Prometheus metrics available at: http://localhost:${port}/metrics`,
     'Bootstrap',
   );
 }

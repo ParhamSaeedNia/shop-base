@@ -44,7 +44,7 @@ export class ProductController {
   create(@Body() createProductDto: CreateProductDto) {
     return this.productService.create(createProductDto);
   }
-
+  //---------------------------------------------
   @Get()
   @ApiOperation({ summary: 'Get all products with filters' })
   @ApiQuery({

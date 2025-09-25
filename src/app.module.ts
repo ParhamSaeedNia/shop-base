@@ -4,6 +4,8 @@ import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
 import { ProductsModule } from './products/products.module';
 import { LoggerModule } from './logger/logger.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -11,6 +13,8 @@ import { LoggerModule } from './logger/logger.module';
       isGlobal: true,
     }),
     LoggerModule,
+    MetricsModule,
+    HealthModule,
     DatabaseModule,
     AuthModule,
     ProductsModule,
