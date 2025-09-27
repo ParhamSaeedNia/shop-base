@@ -7,6 +7,7 @@ import { ServiceCallInterceptor } from './logger/interceptors/service-call.inter
 import { HttpRequestInterceptor } from './logger/interceptors/http-request.interceptor';
 import { PrometheusInterceptor } from './metrics/prometheus.interceptor';
 import cookieParser from 'cookie-parser';
+import { Sequelize } from 'sequelize-typescript';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
@@ -62,5 +63,36 @@ async function bootstrap(): Promise<void> {
     `Prometheus metrics available at: http://localhost:${port}/metrics`,
     'Bootstrap',
   );
+
+  // Graceful shutdown handling
+  const gracefulShutdown = async (signal: string) => {
+    logger.log(
+      `Received ${signal}. Starting graceful shutdown...`,
+      'Bootstrap',
+    );
+
+    try {
+      // Close database connections
+      const sequelize = app.get(Sequelize);
+      await sequelize.close();
+      logger.log('Database connections closed', 'Bootstrap');
+
+      // Close the application
+      await app.close();
+      logger.log('Application closed successfully', 'Bootstrap');
+
+      process.exit(0);
+    } catch (error) {
+      logger.error(
+        `Error during shutdown: ${error instanceof Error ? error.message : String(error)}`,
+        'Bootstrap',
+      );
+      process.exit(1);
+    }
+  };
+
+  // Handle SIGINT (Ctrl+C) and SIGTERM
+  process.on('SIGINT', () => void gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => void gracefulShutdown('SIGTERM'));
 }
 void bootstrap();
