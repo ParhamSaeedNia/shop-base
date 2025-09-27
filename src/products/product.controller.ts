@@ -20,9 +20,13 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { ProductService } from './product.service';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
-import { ProductResponseDto } from './dto/product-response.dto';
+import { CreateProductDto } from './dto/request/create-product.dto';
+import { UpdateProductDto } from './dto/request/update-product.dto';
+import { GetProductsDto } from './dto/request/get-products.dto';
+import { ProductResponseDto } from './dto/response/product-response.dto';
+import { ProductsListResponseDto } from './dto/response/products-list-response.dto';
+import { CategoriesResponseDto } from './dto/response/categories-response.dto';
+import { DeleteProductResponseDto } from './dto/response/delete-product-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 
@@ -46,98 +50,30 @@ export class ProductController {
   }
   //---------------------------------------------
   @Get()
-  @ApiOperation({ summary: 'Get all products with filters' })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: Number,
-    description: 'Page number',
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: 'Items per page',
-  })
-  @ApiQuery({
-    name: 'category',
-    required: false,
-    type: String,
-    description: 'Filter by category',
-  })
-  @ApiQuery({
-    name: 'brand',
-    required: false,
-    type: String,
-    description: 'Filter by brand',
-  })
-  @ApiQuery({
-    name: 'minPrice',
-    required: false,
-    type: Number,
-    description: 'Minimum price',
-  })
-  @ApiQuery({
-    name: 'maxPrice',
-    required: false,
-    type: Number,
-    description: 'Maximum price',
-  })
-  @ApiQuery({
-    name: 'isActive',
-    required: false,
-    type: Boolean,
-    description: 'Filter by active status',
-  })
-  @ApiQuery({
-    name: 'isFeatured',
-    required: false,
-    type: Boolean,
-    description: 'Filter by featured status',
-  })
-  @ApiQuery({
-    name: 'search',
-    required: false,
-    type: String,
-    description: 'Search term',
+  @ApiOperation({
+    summary: 'Get all products with filters and pagination',
+    description:
+      'Retrieve a paginated list of products with optional filtering and sorting options',
   })
   @ApiResponse({
     status: 200,
     description: 'Products retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        products: {
-          type: 'array',
-          items: { $ref: '#/components/schemas/ProductResponseDto' },
-        },
-        total: { type: 'number' },
-        page: { type: 'number' },
-        totalPages: { type: 'number' },
-      },
-    },
+    type: ProductsListResponseDto,
   })
-  findAll(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-    @Query('category') category?: string,
-    @Query('brand') brand?: string,
-    @Query('minPrice') minPrice?: string,
-    @Query('maxPrice') maxPrice?: string,
-    @Query('isActive') isActive?: string,
-    @Query('isFeatured') isFeatured?: string,
-    @Query('search') search?: string,
-  ) {
+  @ApiResponse({ status: 400, description: 'Invalid query parameters' })
+  findAll(@Query() query: GetProductsDto) {
     return this.productService.findAll(
-      page,
-      limit,
-      category,
-      brand,
-      minPrice ? parseInt(minPrice, 10) : undefined,
-      maxPrice ? parseInt(maxPrice, 10) : undefined,
-      isActive === 'true' ? true : isActive === 'false' ? false : undefined,
-      isFeatured === 'true' ? true : isFeatured === 'false' ? false : undefined,
-      search,
+      query.page,
+      query.limit,
+      query.search,
+      query.category,
+      query.brand,
+      query.minPrice,
+      query.maxPrice,
+      query.isActive,
+      query.isFeatured,
+      query.sortBy,
+      query.sortOrder,
     );
   }
   //---------------------------------------------
@@ -199,14 +135,14 @@ export class ProductController {
   }
   //---------------------------------------------
   @Get('categories')
-  @ApiOperation({ summary: 'Get all product categories' })
+  @ApiOperation({
+    summary: 'Get all product categories',
+    description: 'Retrieve a list of all available product categories',
+  })
   @ApiResponse({
     status: 200,
     description: 'Categories retrieved successfully',
-    schema: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    type: CategoriesResponseDto,
   })
   getCategories() {
     return this.productService.getCategories();
@@ -259,8 +195,15 @@ export class ProductController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Delete product (Admin only)' })
-  @ApiResponse({ status: 200, description: 'Product deleted successfully' })
+  @ApiOperation({
+    summary: 'Delete product (Admin only)',
+    description: 'Permanently delete a product from the system',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Product deleted successfully',
+    type: DeleteProductResponseDto,
+  })
   @ApiResponse({ status: 403, description: 'Admin access required' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   remove(@Param('id', ParseUUIDPipe) id: string) {

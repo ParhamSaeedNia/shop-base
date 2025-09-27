@@ -5,10 +5,10 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Product } from '../entities/product.model';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
 import { CreationAttributes, Op, WhereOptions } from 'sequelize';
 import { ProductWhereOptions } from './interfaces/product-where-options.interface';
+import { CreateProductDto } from './dto/request/create-product.dto';
+import { UpdateProductDto } from './dto/request/update-product.dto';
 
 @Injectable()
 export class ProductService {
@@ -31,13 +31,15 @@ export class ProductService {
   async findAll(
     page: number = 1,
     limit: number = 10,
+    search?: string,
     category?: string,
     brand?: string,
     minPrice?: number,
     maxPrice?: number,
     isActive?: boolean,
     isFeatured?: boolean,
-    search?: string,
+    sortBy?: string,
+    sortOrder?: 'asc' | 'desc',
   ): Promise<{
     products: Product[];
     total: number;
@@ -73,11 +75,19 @@ export class ProductService {
       ];
     }
 
+    // Build order clause
+    const order: any[] = [];
+    if (sortBy && sortOrder) {
+      order.push([sortBy, sortOrder.toUpperCase()]);
+    } else {
+      order.push(['createdAt', 'DESC']);
+    }
+
     const { count, rows } = await this.productModel.findAndCountAll({
       where: where as WhereOptions<Product>,
       limit,
       offset,
-      order: [['createdAt', 'DESC']],
+      order,
     });
 
     return {
@@ -117,7 +127,9 @@ export class ProductService {
     }
   }
   //---------------------------------------------
-  async remove(id: string): Promise<void> {
+  async remove(
+    id: string,
+  ): Promise<{ success: boolean; message: string; deletedId: string }> {
     const product = await this.productModel.findByPk(id);
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -125,12 +137,17 @@ export class ProductService {
 
     try {
       await product.destroy();
+      return {
+        success: true,
+        message: 'Product deleted successfully',
+        deletedId: id,
+      };
     } catch {
       throw new BadRequestException('Failed to delete product');
     }
   }
   //---------------------------------------------
-  async getCategories(): Promise<string[]> {
+  async getCategories(): Promise<{ categories: string[] }> {
     const categories = await this.productModel.findAll({
       attributes: ['category'],
       where: {
@@ -140,7 +157,9 @@ export class ProductService {
       group: ['category'],
     });
 
-    return categories.map((cat) => cat.category).filter(Boolean);
+    return {
+      categories: categories.map((cat) => cat.category).filter(Boolean),
+    };
   }
   //---------------------------------------------
   async getBrands(): Promise<string[]> {

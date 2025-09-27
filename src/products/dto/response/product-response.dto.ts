@@ -3,7 +3,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class ProductResponseDto {
   @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
-    description: 'Product ID',
+    description: 'Product unique identifier',
   })
   id: string;
 
@@ -25,11 +25,11 @@ export class ProductResponseDto {
   })
   price: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 100,
     description: 'Stock quantity',
   })
-  stock: number;
+  stock?: number;
 
   @ApiPropertyOptional({
     example: 'IPH15PRO-128-BLK',
@@ -50,28 +50,25 @@ export class ProductResponseDto {
   brand?: string;
 
   @ApiPropertyOptional({
-    example: ['https://example.com/image1.jpg'],
+    example: [
+      'https://example.com/image1.jpg',
+      'https://example.com/image2.jpg',
+    ],
     description: 'Product images URLs',
   })
   images?: string[];
 
   @ApiPropertyOptional({
-    example: { color: 'Space Black', storage: '128GB' },
+    example: { color: 'Space Black', storage: '128GB', screen: '6.1 inch' },
     description: 'Product specifications',
   })
   specifications?: Record<string, any>;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 4.5,
-    description: 'Product rating',
+    description: 'Product rating (0-5)',
   })
-  rating: number;
-
-  @ApiProperty({
-    example: 150,
-    description: 'Review count',
-  })
-  reviewCount: number;
+  rating?: number;
 
   @ApiProperty({
     example: true,
@@ -128,26 +125,14 @@ export class ProductResponseDto {
   size?: string;
 
   @ApiProperty({
-    example: 1250,
-    description: 'View count',
-  })
-  viewCount: number;
-
-  @ApiProperty({
-    example: 45,
-    description: 'Sold count',
-  })
-  soldCount: number;
-
-  @ApiProperty({
-    example: '2024-01-15T10:30:00Z',
-    description: 'Created date',
+    example: '2024-01-01T00:00:00Z',
+    description: 'Product creation date',
   })
   createdAt: Date;
 
   @ApiProperty({
-    example: '2024-01-15T10:30:00Z',
-    description: 'Updated date',
+    example: '2024-01-01T00:00:00Z',
+    description: 'Product last update date',
   })
   updatedAt: Date;
 }
