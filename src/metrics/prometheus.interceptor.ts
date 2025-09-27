@@ -20,7 +20,7 @@ export class PrometheusInterceptor implements NestInterceptor {
     const startTime = Date.now();
 
     const method = request.method;
-    const route = request.route?.path || request.path;
+    const route = (request.route as { path?: string })?.path || request.path;
 
     return next.handle().pipe(
       tap({
@@ -36,7 +36,7 @@ export class PrometheusInterceptor implements NestInterceptor {
         },
         error: (error) => {
           const duration = Date.now() - startTime;
-          const statusCode = error.status || 500;
+          const statusCode = (error as { status?: number }).status || 500;
           this.metricsService.recordHttpRequest(
             method,
             route,

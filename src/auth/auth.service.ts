@@ -5,7 +5,6 @@ import { User } from '../entities/user.model';
 import { RefreshToken } from '../entities/refresh-token.model';
 import { ConfigService } from '@nestjs/config';
 import { LoggerService } from '../logger/logger.service';
-import { MetricsService } from '../metrics/metrics.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/request/create-user.dto';
 import { AuthResponseDto } from './dto/response/auth.response';
@@ -18,7 +17,6 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly logger: LoggerService,
-    private readonly metricsService: MetricsService,
     @InjectModel(User) private readonly userModel: typeof User,
     @InjectModel(RefreshToken)
     private readonly refreshTokenModel: typeof RefreshToken,
@@ -155,7 +153,6 @@ export class AuthService {
         `Registration failed: Email already exists - ${createUserDto.email}`,
         'AuthService',
       );
-      this.metricsService.recordAuthOperation('register', 'error');
       throw new UnauthorizedException('Email already exists');
     }
 
@@ -170,8 +167,6 @@ export class AuthService {
       `User registered successfully: ${newUser.id}`,
       'AuthService',
     );
-
-    this.metricsService.recordAuthOperation('register', 'success');
 
     const tokens = await this.issueTokens(newUser);
 

@@ -9,14 +9,12 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CreationAttributes, Op, WhereOptions } from 'sequelize';
 import { ProductWhereOptions } from './interfaces/product-where-options.interface';
-import { MetricsService } from '../metrics/metrics.service';
 
 @Injectable()
 export class ProductService {
   constructor(
     @InjectModel(Product)
     private readonly productModel: typeof Product,
-    private readonly metricsService: MetricsService,
   ) {}
   //---------------------------------------------
   async create(createProductDto: CreateProductDto): Promise<Product> {
@@ -24,10 +22,8 @@ export class ProductService {
       const product = await this.productModel.create(
         createProductDto as unknown as CreationAttributes<Product>,
       );
-      this.metricsService.recordProductOperation('create', 'success');
       return product;
     } catch {
-      this.metricsService.recordProductOperation('create', 'error');
       throw new BadRequestException('Failed to create product');
     }
   }
@@ -110,16 +106,13 @@ export class ProductService {
   ): Promise<Product> {
     const product = await this.productModel.findByPk(id);
     if (!product) {
-      this.metricsService.recordProductOperation('update', 'error');
       throw new NotFoundException('Product not found');
     }
 
     try {
       await product.update(updateProductDto);
-      this.metricsService.recordProductOperation('update', 'success');
       return product;
     } catch {
-      this.metricsService.recordProductOperation('update', 'error');
       throw new BadRequestException('Failed to update product');
     }
   }
@@ -127,15 +120,12 @@ export class ProductService {
   async remove(id: string): Promise<void> {
     const product = await this.productModel.findByPk(id);
     if (!product) {
-      this.metricsService.recordProductOperation('delete', 'error');
       throw new NotFoundException('Product not found');
     }
 
     try {
       await product.destroy();
-      this.metricsService.recordProductOperation('delete', 'success');
     } catch {
-      this.metricsService.recordProductOperation('delete', 'error');
       throw new BadRequestException('Failed to delete product');
     }
   }
